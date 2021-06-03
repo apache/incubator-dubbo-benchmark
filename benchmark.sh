@@ -3,16 +3,18 @@
 usage() {
     echo "Usage: ${PROGRAM_NAME} command dirname"
     echo "command: [m|s|p|f]"
+    echo "         -v Dubbo version, eg: 2.7.11, 3.0.0.preview"
     echo "         -m [profiling|benchmark], specify benchmark mode"
     echo "         -s hostname, host name"
     echo "         -p port, port number"
-    echo "         -f output file path"
+    echo "         -f output folder path"
+    echo "         -n output file name"
     echo "         -a other args"
     echo "dirname: test module name"
 }
 
 build() {
-    mvn --projects benchmark-base,client-base,server-base,${PROJECT_DIR} clean package
+    ./mvnw --projects benchmark-base,client-base,server-base,${PROJECT_DIR} clean package -Ddubbo.version=${DUBBO_VERSION}
 }
 
 java_options() {
@@ -31,7 +33,7 @@ run() {
         JAR=`find ${PROJECT_DIR}/target/*.jar | head -n 1`
         echo
         echo "RUN ${PROJECT_DIR} IN ${MODE:-benchmark} MODE"
-        CMD="java ${JAVA_OPTIONS} -Dserver.host=${SERVER} -Dserver.port=${PORT} -Dbenchmark.output=${OUTPUT} -jar ${JAR} ${OTHERARGS}"
+        CMD="java ${JAVA_OPTIONS} -Dserver.host=${SERVER} -Dserver.port=${PORT} -Dbenchmark.output.dir=${OUTPUT} -Dbenchmark.output.name=${FILENAME} -jar ${JAR} ${OTHERARGS}"
         echo "command is: ${CMD}"
         echo
         ${CMD}
@@ -46,8 +48,11 @@ OUTPUT=""
 OPTIND=1
 OTHERARGS=""
 
-while getopts "m:s:p:f:a:" opt; do
+while getopts "v:m:s:p:f:n:a:" opt; do
     case "$opt" in
+        v)
+            DUBBO_VERSION=${OPTARG}
+            ;;
         m)
             MODE=${OPTARG}
             ;;
@@ -59,6 +64,9 @@ while getopts "m:s:p:f:a:" opt; do
             ;;
         f)
             OUTPUT=${OPTARG}
+            ;;
+        n)
+            FILENAME=${OPTARG}
             ;;
         a)
             OTHERARGS=${OPTARG}
